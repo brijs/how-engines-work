@@ -1,0 +1,6 @@
+.venv/
+tmp.wav
+__pycache__/
+.DS_Store
+tts.log
+tests/shots/

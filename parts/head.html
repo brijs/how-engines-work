@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>How Engines Work</title>
+<meta name="description" content="A 3D, narrated garage tour of how motorcycle engines work: four-stroke cycle, cams and valves, cooling, oil, fuel and exhaust, engine layouts, torque vs power, and Royal Enfield dyno curves.">
+<meta name="explainer:topic" content="Science">
+<meta name="explainer:tags" content="engines, motorcycles, mechanics, 3D, Royal Enfield">
+<style>
+:root{--bg:#14110e;--panel:#1f1a15;--panel2:#2a231c;--line:#3b3127;--chalk:#f3ead8;--mut:#b9ab94;--dim:#7d705e;
+ --amber:#ffb347;--amber2:#ff8f1f;--red:#e5533d;--blue:#4fa3ff;--green:#6fd08c;--oil:#e0a526;--cool:#35d0c0;--air:#8fd3ff;--fuel:#ff8a3d;--exh:#9aa0a8;
+ --c350:#c97f22;--h450:#3a9cc4;--i650:#d9587a;--r:14px;
+ font-family:system-ui,-apple-system,"Segoe UI",Roboto,Ubuntu,sans-serif;color-scheme:dark}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--chalk);overflow:hidden}
+body{background:radial-gradient(ellipse 60% 40% at 20% 0%,#3a2a15 0%,transparent 70%),radial-gradient(ellipse 50% 35% at 85% 0%,#33240f 0%,transparent 70%),
+ radial-gradient(circle,#2a221a 1.2px,transparent 1.4px) 0 0/22px 22px,var(--bg)}
+body.nofx{background:var(--bg)}
+button{font:inherit;color:inherit;cursor:pointer}
+a{color:var(--amber)}
+#app{display:grid;grid-template-rows:auto 1fr auto;height:100dvh;height:100vh}
+@supports(height:100dvh){#app{height:100dvh}}
+/* top bar */
+#hdr{display:flex;align-items:center;gap:12px;padding:8px 14px;background:linear-gradient(#1d1712,#16120e);border-bottom:1px solid var(--line);min-width:0}
+#hdr .logo{font-weight:800;letter-spacing:.5px;color:var(--amber);white-space:nowrap;font-size:15px}
+#hdr .logo small{color:var(--mut);font-weight:600;margin-left:6px}
+#dots{display:flex;gap:5px;flex:1;justify-content:center;flex-wrap:wrap;min-width:0}
+#dots button{width:14px;height:14px;border-radius:50%;border:2px solid #5a4a38;background:#2a221a;padding:0}
+#dots button.done{background:#7a5a2a;border-color:#a8792f}
+#dots button.on{background:var(--amber);border-color:#fff3d6;box-shadow:0 0 10px var(--amber)}
+#rank{white-space:nowrap;font-size:13px;color:var(--mut)}
+#rank b{color:var(--amber)}
+#fxbtn{background:none;border:1px solid var(--line);border-radius:8px;padding:3px 8px;font-size:12px;color:var(--mut)}
+/* scene */
+#scene{position:relative;overflow:auto;padding:12px 14px 6px;min-height:0}
+.sc-title{display:flex;align-items:baseline;gap:10px;margin:0 0 8px;flex-wrap:wrap}
+.sc-title h2{margin:0;font-size:22px;color:var(--chalk);font-family:"Marker Felt","Chalkboard SE","Comic Sans MS",system-ui,sans-serif;letter-spacing:.3px}
+.sc-title .tag{font-size:12px;color:var(--bg);background:var(--amber);border-radius:20px;padding:2px 10px;font-weight:700}
+.wrap{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:12px;height:calc(100% - 40px);min-height:420px}
+.wrap.wide{grid-template-columns:minmax(0,1fr)}
+.viz{position:relative;border-radius:var(--r);overflow:hidden;background:#0f0c0a;border:1px solid var(--line);min-height:300px;box-shadow:inset 0 0 60px #000}
+.viz canvas.gl{width:100%;height:100%;display:block;touch-action:none;cursor:grab}
+.viz .hint{position:absolute;left:10px;bottom:8px;font-size:11.5px;color:var(--mut);background:#0009;padding:3px 8px;border-radius:8px;pointer-events:none}
+.viz .hud{position:absolute;right:10px;top:10px;display:flex;flex-direction:column;gap:6px;align-items:flex-end;pointer-events:none}
+.viz .hud>*{pointer-events:auto}
+.viz .tl{position:absolute;left:10px;top:10px;pointer-events:none}
+.side{display:flex;flex-direction:column;gap:10px;overflow:auto;min-height:0}
+.card{background:linear-gradient(#231d17,#1c1712);border:1px solid var(--line);border-radius:var(--r);padding:12px 13px;font-size:14px;line-height:1.45}
+.card h3{margin:0 0 6px;font-size:15px;color:var(--amber)}
+.card p{margin:4px 0}
+.small{font-size:12px;color:var(--mut)}
+.row{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.btn{background:#2d251d;border:1px solid #4a3c2d;border-radius:10px;padding:6px 11px;font-size:13.5px;color:var(--chalk);transition:.15s}
+.btn:hover{border-color:var(--amber)}
+.btn.on{background:var(--amber);color:#1a1209;border-color:var(--amber);font-weight:700}
+.btn.big{padding:9px 16px;font-size:15px}
+.chip{border-radius:20px;padding:4px 11px;font-size:12.5px}
+label.sl{display:block;font-size:13px;color:var(--mut);margin:6px 0 2px}
+label.sl b{color:var(--chalk)}
+input[type=range]{width:100%;accent-color:var(--amber)}
+.meter{height:10px;border-radius:6px;background:#0e0b09;border:1px solid var(--line);overflow:hidden}
+.meter i{display:block;height:100%;width:0;background:var(--amber);border-radius:6px;transition:width .15s}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:2px 10px;font-size:13px}
+.kv span:nth-child(odd){color:var(--mut)}
+.pill{display:inline-block;padding:1px 8px;border-radius:12px;font-size:12px;font-weight:700}
+.legend{display:flex;gap:10px;flex-wrap:wrap;font-size:12.5px;color:var(--mut)}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:4px;vertical-align:-2px}
+.stroke-badge{font-size:22px;font-weight:800;padding:4px 12px;border-radius:10px;background:#000a;border:1px solid var(--line);font-family:"Marker Felt","Chalkboard SE",system-ui,sans-serif}
+.checklist{list-style:none;margin:6px 0 0;padding:0;display:grid;grid-template-columns:1fr 1fr;gap:3px 8px;font-size:13px}
+.checklist li{color:var(--dim)}
+.checklist li.got{color:var(--green)}
+.checklist li.got:before{content:"✔ "}
+.checklist li:not(.got):before{content:"○ "}
+canvas.c2{width:100%;display:block;border-radius:10px;background:#0f0c0a;border:1px solid var(--line)}
+/* dock */
+#dock{display:grid;grid-template-columns:88px 1fr auto;gap:10px;align-items:center;padding:8px 14px;background:linear-gradient(#1a150f,#120f0b);border-top:1px solid var(--line);min-width:0}
+#ustad{width:88px;height:96px}
+#ustad svg{width:100%;height:100%;overflow:visible}
+#capbox{min-width:0}
+#cap{font-size:15px;line-height:1.45;max-height:4.4em;overflow:auto;color:#cfc2ab}
+#cap span{transition:color .2s}
+#cap span.lit{color:#fff6e3}
+#react{font-size:13px;color:var(--amber);min-height:1.2em;margin-top:2px;opacity:0;transition:opacity .3s}
+#react.show{opacity:1}
+#ctl{display:flex;gap:6px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
+#ctl .ic{background:#2a231b;border:1px solid #4a3c2d;border-radius:10px;width:36px;height:36px;font-size:15px;padding:0}
+#ctl .ic.on{border-color:var(--amber);color:var(--amber)}
+#next{background:var(--amber);color:#1a1209;border:0;border-radius:12px;padding:9px 16px;font-weight:800}
+#back{background:#2a231b;border:1px solid #4a3c2d;border-radius:12px;padding:8px 12px}
+#next.pulse{animation:pulse 1.2s infinite}
+@keyframes pulse{50%{box-shadow:0 0 0 7px #ffb34733}}
+/* intro */
+#intro{position:fixed;inset:0;z-index:50;display:grid;place-items:center;background:radial-gradient(ellipse at 50% 30%,#3a2810,#0c0a08 70%);padding:16px}
+#intro .box{max-width:620px;text-align:center}
+#intro h1{font-size:clamp(30px,6vw,54px);margin:6px 0;color:var(--amber);font-family:"Marker Felt","Chalkboard SE",system-ui,sans-serif;text-shadow:0 0 30px #ff8f1f66}
+#intro p{color:var(--mut);font-size:16px;line-height:1.5}
+#intro .row{justify-content:center;margin-top:16px}
+#toast{position:fixed;left:50%;top:60px;transform:translate(-50%,-30px);opacity:0;z-index:40;background:var(--amber);color:#1a1209;font-weight:800;padding:10px 18px;border-radius:14px;transition:.4s;pointer-events:none;box-shadow:0 8px 30px #000a}
+#toast.show{opacity:1;transform:translate(-50%,0)}
+.quiz .q{margin-bottom:12px}
+.quiz .opts{display:grid;gap:6px;margin-top:6px}
+.quiz .opts button{text-align:left;background:#2a231b;border:1px solid #4a3c2d;border-radius:10px;padding:7px 10px;font-size:14px}
+.quiz .opts button.ok{border-color:var(--green);background:#1d3324}
+.quiz .opts button.no{border-color:var(--red);background:#3a1f1a}
+.quiz .ex{font-size:13px;color:var(--mut);margin-top:4px}
+pre.cheat{white-space:pre-wrap;font-size:12.5px;background:#0f0c0a;border:1px dashed #5a4a38;border-radius:10px;padding:10px;max-height:360px;overflow:auto;color:#e8dcc4}
+.tip{position:absolute;pointer-events:none;background:#0d0b09ee;border:1px solid var(--line);border-radius:8px;padding:6px 9px;font-size:12.5px;line-height:1.4;white-space:nowrap;z-index:5}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+@media (max-width:860px){
+ .wrap{grid-template-columns:minmax(0,1fr);height:auto}
+ .viz{height:56vh;min-height:300px}
+ .side{overflow:visible}
+ #scene{padding:10px 10px 4px}
+ #hdr{padding:6px 10px;gap:8px}
+ #hdr .logo small,#fxbtn{display:none}
+ #dots button{width:11px;height:11px}
+ #dock{grid-template-columns:58px 1fr;padding:6px 10px}
+ #ustad{width:58px;height:64px}
+ #ctl{grid-column:1/-1;justify-content:space-between}
+ #cap{font-size:13.5px;max-height:3em}
+ .sc-title h2{font-size:18px}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div id="intro" role="dialog" aria-label="Welcome">
+ <div class="box">
+  <svg width="120" height="120" viewBox="0 0 120 120" aria-hidden="true"><g fill="none" stroke="#ffb347" stroke-width="6"><circle cx="60" cy="60" r="30"/><path d="M60 14v14M60 92v14M14 60h14M92 60h14M27 27l10 10M83 83l10 10M27 93l10-10M83 37l10-10"/></g><circle cx="60" cy="60" r="10" fill="#ffb347"/></svg>
+  <h1>How Engines Work</h1>
+  <p>A hands-on garage tour with Ustad the mechanic. You can spin, zoom and take apart 3D engines, run the four-stroke cycle in slow motion, follow oil, coolant, fuel and exhaust, compare engine layouts, and put three Royal Enfields on the dyno.</p>
+  <div class="row"><button class="btn big on" id="goSound">🔊 Enter the garage</button><button class="btn big" id="goSilent">Enter silently (captions)</button></div>
+  <p class="small" style="margin-top:14px">Best on a laptop or desktop. In 3D views: drag to rotate, right-drag or two fingers to pan, scroll or pinch to zoom, click parts.</p>
+ </div>
+</div>
+<div id="toast" role="status" aria-live="polite"></div>
+<div id="app">
+ <header id="hdr">
+  <div class="logo">⚙ How Engines Work<small>with Ustad</small></div>
+  <nav id="dots" aria-label="Scenes"></nav>
+  <div id="rank">Rank: <b id="rankName">Apprentice</b></div>
+  <button id="fxbtn" aria-pressed="true" title="Toggle background effects">FX</button>
+ </header>
+ <main id="scene" aria-live="polite"></main>
+ <footer id="dock">
+  <div id="ustad" aria-label="Ustad the mechanic"></div>
+  <div id="capbox"><div id="cap"></div><div id="react"></div></div>
+  <div id="ctl">
+   <button class="ic" id="bReplay" aria-label="Replay narration" title="Replay">↺</button>
+   <button class="ic" id="bStop" aria-label="Stop narration" title="Stop">■</button>
+   <button class="ic" id="bMute" aria-label="Mute narration" title="Mute">🔊</button>
+   <button class="ic" id="bAuto" aria-label="Auto-advance" title="Auto-advance when narration ends">⏭</button>
+   <button id="back" aria-label="Previous scene">◀</button>
+   <button id="next" aria-label="Next scene">Next ▶</button>
+  </div>
+ </footer>
+</div>
+<script>__THREE__</script>
+<script>
+const NARR=__NARR__;
+const AUDIO=__AUDIO__;
+__JS__
+</script>
+</body>
+</html>
